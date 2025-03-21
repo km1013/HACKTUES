@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../screens/home_icon.dart';
+
+
+
 
 class BudgetScreen extends StatelessWidget {
   final double netIncome = 2500.00;
@@ -17,8 +21,9 @@ class BudgetScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: white,
       appBar: AppBar(
-        title: Text("Budget Overview", style: TextStyle(color: white)),
-        backgroundColor: black,
+         backgroundColor: Colors.black,
+        leading: HomeIcon(), 
+        title: Text("Budget Overview", style: TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         child: Padding(

@@ -107,7 +107,7 @@ class _MainPageState extends State<MainPage> {
                     key: ValueKey(_cardIndex),
                     balance: "\$${currentCard.balance.toStringAsFixed(2)}",
                     lastDigits: currentCard.lastDigits,
-                    color: _cardIndex == 0 ? Colors.grey : Colors.black,
+                    color: _cardIndex == 0 ? Colors.green : Colors.black,
                     cardholder: _cardIndex == 0 ? "Ruslan Nikolov" : "Simeon Simeonov",
                     brand: currentCard.brand,
                     offset: 50,
@@ -173,7 +173,7 @@ class _MainPageState extends State<MainPage> {
                       );
                     }).toList(),
                     ListTile(
-                      title: Text("Income: \$${TransactionService().income.toStringAsFixed(2)}"),
+                      title: Text("Income: \$3500.00 "),
                     ),
                     ListTile(
                       title: Text("Expenses: \$${TransactionService().expenses.toStringAsFixed(2)}"),

@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/credit_card_.dart';
+import '../screens/home_icon.dart';
 
 class SavingsScreen extends StatefulWidget {
   @override
@@ -14,8 +15,9 @@ class _SavingsScreenState extends State<SavingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Savings"),
-        backgroundColor: Colors.black,
+         backgroundColor: Colors.black,
+          leading: HomeIcon(), // 👈 This replaces the default back button
+            title: Text("Savings", style: TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),

@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/credit_card_.dart';
+import '../screens/home_icon.dart';
 
 class AddFundsScreen extends StatefulWidget {
   @override
@@ -18,7 +19,8 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Funds'),
+      leading: HomeIcon(), // 👈 This replaces the default back button
+      title: Text("Add funds", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
       ),
       body: Padding(

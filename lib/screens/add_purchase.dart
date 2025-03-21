@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/home_icon.dart';
 
 class AddPurchaseScreen extends StatefulWidget {
   @override
@@ -39,15 +40,11 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
     return Scaffold(
       backgroundColor: white,
       appBar: AppBar(
-        backgroundColor: white,
+        backgroundColor: black,
         elevation: 0,
-        title: Text('Add Purchase', style: TextStyle(color: black)),
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context); // Closes the screen
-          },
-          icon: Icon(Icons.arrow_left)),
+        leading: HomeIcon(), 
+        title: Text("Add a purchase", style: TextStyle(color: Colors.white)),
         actions: [
           TextButton(
             onPressed: _savePurchase,
