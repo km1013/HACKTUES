@@ -1,170 +1,278 @@
+
 import 'package:flutter/material.dart';
+import '../services/credit_card_.dart';
+import '../services/transaction.dart';
 import 'send_money.dart';
 import 'request_money.dart';
 import 'budget.dart';
 import 'add_purchase.dart';
+import 'savings.dart';
+import 'add_funds.dart';
 
-class DashboardScreen extends StatefulWidget {
-  @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+void main() {
+  runApp(DashboardScreen());
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
-  final Color lightGreen = Color(0xFF4CAF50); // Light green accent
-  final Color black = Colors.black;
-  final Color white = Colors.white;
+class DashboardScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MainPage(),
+      routes: {
+        '/request': (context) => RequestMoneyScreen(),
+        '/send': (context) => SendMoneyScreen(),
+        '/budget': (context) => BudgetScreen(),
+        '/add_purchase': (context) => AddPurchaseScreen(),
+      },
+    );
+  }
+}
+
+class MainPage extends StatefulWidget {
+  static List<Map<String, dynamic>> transactions = [];
+
+  @override
+  _MainPageState createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  bool _isMenuOpen = false;
+  int _cardIndex = 0;
+
+  void _toggleMenu() {
+    setState(() {
+      _isMenuOpen = !_isMenuOpen;
+    });
+  }
+
+  void _switchCard() {
+    setState(() {
+      _cardIndex = (_cardIndex + 1) % CreditCardService().cards.length;
+    });
+  }
+
+  void _onMenuItemSelected(String item) {
+    setState(() {
+      _isMenuOpen = false;
+    });
+
+    if (item == 'Add Purchase') {
+      Navigator.pushNamed(context, '/add_purchase');
+    } else if (item == 'Budget') {
+      Navigator.pushNamed(context, '/budget');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = CreditCardService().cards;
+    final currentCard = cards[_cardIndex];
+    final savings = CreditCardService().getSavingsBalance();
+
+    return Scaffold(
+      backgroundColor: Colors.grey[200],
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              SizedBox(height: 80),
+              Align(
+                alignment: Alignment.topLeft,
+                child: !_isMenuOpen
+                    ? Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.menu, size: 30),
+                            onPressed: _toggleMenu,
+                          ),
+                          Text("Cash", style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold)),
+                          Text("Mate", style: TextStyle(color: Colors.green, fontSize: 22, fontWeight: FontWeight.bold)),
+                        ],
+                      )
+                    : SizedBox(),
+              ),
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: _switchCard,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 500),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: BalanceCard(
+                    key: ValueKey(_cardIndex),
+                    balance: "\$${currentCard.balance.toStringAsFixed(2)}",
+                    lastDigits: currentCard.lastDigits,
+                    color: _cardIndex == 0 ? Colors.grey : Colors.black,
+                    cardholder: _cardIndex == 0 ? "Ruslan Nikolov" : "Simeon Simeonov",
+                    brand: currentCard.brand,
+                    offset: 50,
+                  ),
+                ),
+              ),
+              SizedBox(height: 100),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(minimumSize: Size(120, 50)),
+                    onPressed: () async {
+                      await Navigator.pushNamed(context, '/request');
+                      setState(() {});
+                    },
+                    child: Text("Request"),
+                  ),
+                  SizedBox(width: 20),
+                    ElevatedButton(
+                    onPressed: () async {
+                    await Navigator.push(
+                  context,
+                   MaterialPageRoute(builder: (_) => AddFundsScreen()),
+                   
+                   );
+                  setState(() {}); // Refresh after funds transfer
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AddFundsScreen()));
+                   },
+                  style: ElevatedButton.styleFrom(minimumSize: Size(120, 50)),
+                  child: Text("Add"),
+             
+
+                  ),
+                  SizedBox(width: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(minimumSize: Size(120, 50)),
+                    onPressed: () async {
+                      await Navigator.pushNamed(context, '/send');
+                      setState(() {});
+                    },
+                    child: Text("Send"),
+                  ),
+                ],
+              ),
+              SizedBox(height: 40),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Transaction History", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  children: [
+                    ...MainPage.transactions.reversed.map((txn) {
+                      return ListTile(
+                        leading: Icon(Icons.call_made, color: Colors.red),
+                        title: Text(txn['title']),
+                        subtitle: Text("Sent on ${DateTime.now().toLocal().toString().split(' ')[0]}"),
+                        trailing: Text("-\$${txn['amount'].toStringAsFixed(2)}", style: TextStyle(color: Colors.red)),
+                      );
+                    }).toList(),
+                    ListTile(
+                      title: Text("Income: \$${TransactionService().income.toStringAsFixed(2)}"),
+                    ),
+                    ListTile(
+                      title: Text("Expenses: \$${TransactionService().expenses.toStringAsFixed(2)}"),
+                )],
+                ),
+              )
+            ],
+          ),
+          AnimatedPositioned(
+            duration: Duration(milliseconds: 300),
+            left: _isMenuOpen ? 0 : -250,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 250,
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 50),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.home),
+                    title: Text("Home"),
+                    onTap: () => setState(() => _isMenuOpen = false),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.sports_basketball),
+                    title: Text("Add Purchase"),
+                    onTap: () => _onMenuItemSelected('Add Purchase'),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.shopping_basket),
+                    title: Text("Budget"),
+                    onTap: () => _onMenuItemSelected('Budget'),
+                  ),
+                  ListTile(
+                   leading: Icon(Icons.savings),
+                  title: Text("Savings"),
+                  onTap: () {
+                  Navigator.push(
+                  context,
+                   MaterialPageRoute(builder: (_) => SavingsScreen()),
+                  );
+                },  
+              ),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class BalanceCard extends StatelessWidget {
+  final String balance;
+  final String lastDigits;
+  final Color color;
+  final String cardholder;
+  final String brand;
+  final double offset;
+
+  const BalanceCard({
+    Key? key,
+    required this.balance,
+    required this.lastDigits,
+    required this.color,
+    required this.cardholder,
+    required this.brand,
+    required this.offset,
+  }) : super(key: key);
 
   @override
   
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: white,
-      appBar: AppBar(
-        title: Text("Finance App", style: TextStyle(color: white)),
-        backgroundColor: black,
-        leading: Builder(
-          builder: (context) {
-            return IconButton(
-              icon: Icon(Icons.menu, color: white), // Menu icon
-              onPressed: () {
-                Scaffold.of(context).openDrawer(); // Opens the navigation drawer
-                
-                
-              },
-            );
-          },
-        ),
+    final savings = CreditCardService().getSavingsBalance();
+    return Container(
+      width: 320,
+      height: 200,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(24),
       ),
-      
-      drawer: Drawer(
-        backgroundColor: white,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: black),
-              child: Center(
-                child: Text(
-                  "Menu",
-                  style: TextStyle(color: white, fontSize: 24),
-                ),
-              ),
-            ),
-            _drawerItem(Icons.home, "Home", () {}),
-            _drawerItem(Icons.shopping_basket, "Add Purchase", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context)=>AddPurchaseScreen()),
-              );
-            }),
-            _drawerItem(Icons.bar_chart, "Budget", (){
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => BudgetScreen()),
-              );
-            }),
-            _drawerItem(Icons.savings, "Savings", () {}),
-            _drawerItem(Icons.settings, "Settings", () {}),
-            
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Balance Card
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: black,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Text("Balance", style: TextStyle(color: white, fontSize: 16)),
-                  SizedBox(height: 5),
-                  Text("\$0.00", style: TextStyle(color: white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Card Brand", style: TextStyle(color: white, fontSize: 14)),
-                      Text("**** 1234", style: TextStyle(color: white, fontSize: 14)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // Request & Send Buttons
-ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SendMoneyScreen()), // Navigate correctly
-    );
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Color(0xFF4CAF50), // Light Green
-    padding: EdgeInsets.symmetric(horizontal:40, vertical:-14),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  ),
-  child: Text("Send", style: TextStyle(color: Colors.white, fontSize: 16)),
-),
-
-ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => RequestMoneyScreen()), // Navigate correctly
-    );
-  },
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Color(0xFF4CAF50), // Light Green
-    padding: EdgeInsets.symmetric(horizontal:30, vertical:-14),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  ),
-  child: Text("Request", style: TextStyle(color: Colors.white, fontSize: 16)),
-),
-
-
-            
-
-            // Most Recent Transactions
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text("Most recent", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: black)),
-            ),
-            SizedBox(height: 10),
-
-            _transactionItem(Icons.shopping_cart, "Shopping", "\$50.00"),
-            _transactionItem(Icons.sports_basketball, "Basketball", "\$20.00"),
-          ],
-        ),
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          
+          Text(brand, style: TextStyle(color: Colors.white, fontSize: 18)),
+          Spacer(),
+          Text(balance, style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          SizedBox(height: 10),
+          Text("**** $lastDigits", style: TextStyle(color: Colors.white70, fontSize: 16)),
+          SizedBox(height: 4),
+          Text(cardholder, style: TextStyle(color: Colors.white70, fontSize: 14)),
+          SizedBox(height: 10),
+        ],
       ),
     );
-  }
-
-  // Drawer Menu Item
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: black),
-      title: Text(title, style: TextStyle(color: black, fontSize: 16)),
-      onTap: onTap,
-    );
-  }
-
-  // Transaction Item
-  Widget _transactionItem(IconData icon, String title, String amount) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, size: 30, color: black),
-        title: Text(title, style: TextStyle(color: black)),
-        trailing: Text(amount, style: TextStyle(fontWeight: FontWeight.bold, color: black)),
-      ),
-    );
-    
   }
 }

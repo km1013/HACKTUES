@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/konstantinmilanov-laptop/vscode/flutter_application_2",
+      "program": "/Users/konstantinmilanov-laptop/vscode/flutter_application_2/build/Debug/outDebug"
+    }
+  ]
+}

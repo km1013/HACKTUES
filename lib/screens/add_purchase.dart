@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: AddPurchaseScreen(),
-    );
-  }
-}
-
 class AddPurchaseScreen extends StatefulWidget {
   @override
   _AddPurchaseScreenState createState() => _AddPurchaseScreenState();
 }
 
 class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
+  final Color lightGreen = Color(0xFF4CAF50);
+  final Color black = Colors.black;
+  final Color white = Colors.white;
+  
   String selectedCategory = 'Entertainment';
   final List<String> categories = [
     'Entertainment', 'Housing', 'Food', 'Bills', 'Transport', 'Health', 'Shopping'
@@ -29,22 +19,39 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
   TextEditingController titleController = TextEditingController();
   TextEditingController dateController = TextEditingController();
 
+  void _savePurchase() {
+    if (amountController.text.isEmpty || titleController.text.isEmpty || dateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please fill all fields before confirming!")),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Purchase Added Successfully!")),
+    );
+
+    Navigator.pop(context); // Close the screen after saving
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: white,
         elevation: 0,
-        title: Text('Add Purchase', style: TextStyle(color: Colors.black)),
+        title: Text('Add Purchase', style: TextStyle(color: black)),
         centerTitle: true,
-        leading: TextButton(
-          onPressed: () {},
-          child: Text('Cancel', style: TextStyle(color: Colors.blue)),
-        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context); // Closes the screen
+          },
+          icon: Icon(Icons.arrow_left)),
         actions: [
           TextButton(
-            onPressed: () {},
-            child: Text('Confirm', style: TextStyle(color: Colors.blue)),
+            onPressed: _savePurchase,
+            child: Text('Confirm', style: TextStyle(color: Colors.blue, fontSize: 13)),
           ),
         ],
       ),
@@ -60,17 +67,19 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
               decoration: _buildInputDecoration('\$0.00'),
             ),
             SizedBox(height: 20),
+
             _buildLabel('Title'),
             TextField(
               controller: titleController,
               decoration: _buildInputDecoration('Name of the purchase'),
             ),
             SizedBox(height: 20),
+
             _buildLabel('Category'),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(15),
               ),
               child: DropdownButtonHideUnderline(
@@ -84,7 +93,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                   },
                   items: categories.map((category) {
                     return DropdownMenuItem(
-                      child: Text(category),
+                      child: Text(category, style: TextStyle(color: black)),
                       value: category,
                     );
                   }).toList(),
@@ -92,10 +101,11 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
               ),
             ),
             SizedBox(height: 20),
+
             _buildLabel('Date'),
             TextField(
               controller: dateController,
-              decoration: _buildInputDecoration('Date'),
+              decoration: _buildInputDecoration('Select Date'),
               onTap: () async {
                 DateTime? pickedDate = await showDatePicker(
                   context: context,
@@ -111,6 +121,21 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
               },
               readOnly: true,
             ),
+            SizedBox(height: 40),
+
+            // Save Purchase Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _savePurchase,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: lightGreen,
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text("Save Purchase", style: TextStyle(color: white, fontSize: 18)),
+              ),
+            ),
           ],
         ),
       ),
@@ -118,19 +143,23 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(text, style: TextStyle(fontSize: 16));
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6),
+      child: Text(text, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: black)),
+    );
   }
 
   InputDecoration _buildInputDecoration(String hintText) {
     return InputDecoration(
       filled: true,
-      fillColor: Colors.grey[300],
+      fillColor: Colors.grey[200],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: BorderSide.none,
       ),
       contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
       hintText: hintText,
+      hintStyle: TextStyle(color: black.withOpacity(0.6)),
     );
   }
 }

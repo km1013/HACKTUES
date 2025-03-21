@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/transaction.dart';
 
 class RequestMoneyScreen extends StatefulWidget {
   @override
@@ -6,24 +7,27 @@ class RequestMoneyScreen extends StatefulWidget {
 }
 
 class _RequestMoneyScreenState extends State<RequestMoneyScreen> {
-  final TextEditingController ibanController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController amountController = TextEditingController();
+
   final Color lightGreen = Color(0xFF4CAF50);
   final Color black = Colors.black;
   final Color white = Colors.white;
 
   void _requestMoney() {
-    if (ibanController.text.isEmpty && phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter IBAN or Phone Number")),
-      );
+    double amount = double.tryParse(amountController.text) ?? 0;
+
+    if (amount <= 0) {
+      _showSnack("Enter a valid amount");
       return;
     }
-    // Request money logic (API call, notifications, etc.)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Money Request Sent!")),
-    );
+
+    TransactionService().request(amount);
+    _showSnack("Request successful — money received!");
     Navigator.pop(context);
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -31,70 +35,42 @@ class _RequestMoneyScreenState extends State<RequestMoneyScreen> {
     return Scaffold(
       backgroundColor: white,
       appBar: AppBar(
-        title: Text("Request Money", style: TextStyle(color: white)),
         backgroundColor: black,
+        title: Text("Request Money", style: TextStyle(color: white)),
+        leading: BackButton(color: white),
       ),
       body: Padding(
-        padding: EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            SizedBox(height: 40),
             Text(
               "Request Money",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: black),
             ),
             SizedBox(height: 20),
-
-            // IBAN Input
             TextField(
-              controller: ibanController,
-              keyboardType: TextInputType.text,
+              controller: amountController,
+              keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: "Enter IBAN",
+                hintText: "\$0.00",
+                labelText: "Enter amount",
                 filled: true,
                 fillColor: Colors.grey[200],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // OR Divider
-            Row(
-              children: [
-                Expanded(child: Divider(color: black, thickness: 1)),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text("OR", style: TextStyle(color: black, fontWeight: FontWeight.bold)),
-                ),
-                Expanded(child: Divider(color: black, thickness: 1)),
-              ],
-            ),
-            SizedBox(height: 20),
-
-            // Phone Number Input
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: "Enter Phone Number",
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             SizedBox(height: 30),
-
-            // Confirm Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _requestMoney,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: lightGreen,
-                  padding: EdgeInsets.symmetric(vertical: 14),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text("Confirm", style: TextStyle(color: white, fontSize: 18)),
+                child: Text("Request", style: TextStyle(color: white, fontSize: 18)),
               ),
             ),
           ],

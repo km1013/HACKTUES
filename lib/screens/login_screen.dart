@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
+import '../services/authenticate.dart';
 import 'dashboard_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -8,36 +9,50 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
+  final _formKey = GlobalKey<FormState>();
 
-  // Define color scheme
-  final Color Darkgreen = Color.fromARGB(143, 10, 167, 39); // Dark green accent
+  final Color lightGreen = Color(0xFF4CAF50);
   final Color black = Colors.black;
   final Color white = Colors.white;
 
   void _login() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
 
-      // Simulate authentication delay
-      Future.delayed(Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
+      if (!AuthService().userExists(email)) {
+        _showError("This email is not registered. Please sign up first.");
+        return;
+      }
+
+      final success = AuthService().login(email, password);
+      if (success) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
+          MaterialPageRoute(builder: (_) => DashboardScreen()),
         );
-      });
+      } else {
+        _showError("Incorrect password. Try again.");
+      }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: white,
+      appBar: AppBar(
+        backgroundColor: black,
+        title: Text("Log In", style: TextStyle(color: white)),
+      ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(
@@ -45,141 +60,68 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Title & Subtitle
-                  Column(
-                    children: [
-                      Text(
-                        "Welcome Back!",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: black,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Login into your bank account",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: black.withOpacity(0.7),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 40),
+                  Text("Welcome Back!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: black)),
+                  SizedBox(height: 8),
+                  Text("Log in to your bank account", style: TextStyle(fontSize: 16, color: black.withOpacity(0.6))),
+                  SizedBox(height: 32),
 
-                  // Email Field
                   TextFormField(
                     controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      labelStyle: TextStyle(color: black),
-                      prefixIcon: Icon(Icons.email, color: black),
-                      filled: true,
-                      fillColor: white,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: black),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your email";
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return "Enter a valid email";
-                      }
-                      return null;
-                    },
+                    decoration: _inputDecoration("Email", Icons.email),
+                    validator: (value) => value!.isEmpty ? "Enter your email" : null,
                   ),
                   SizedBox(height: 16),
 
-                  // Password Field
                   TextFormField(
                     controller: passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: "Password",
-                      labelStyle: TextStyle(color: black),
-                      prefixIcon: Icon(Icons.lock, color: black),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: black,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      filled: true,
-                      fillColor: white,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: black),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your password";
-                      }
-                      if (value.length < 6) {
-                        return "Password must be at least 6 characters";
-                      }
-                      return null;
-                    },
+                    obscureText: true,
+                    decoration: _inputDecoration("Password", Icons.lock),
+                    validator: (value) => value!.isEmpty ? "Enter your password" : null,
                   ),
-                  SizedBox(height: 24),
+                  SizedBox(height: 32),
 
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
+                      onPressed: _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Darkgreen,
+                        backgroundColor: lightGreen,
                         padding: EdgeInsets.symmetric(vertical: 14),
-                        textStyle: TextStyle(fontSize: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: _isLoading
-                          ? CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(white),
-                            )
-                          : Text("Login", style: TextStyle(color: white)),
+                      child: Text("Log In", style: TextStyle(color: white, fontSize: 18)),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 12),
 
-                  // Sign Up Navigation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Don't have an account? ", style: TextStyle(color: black)),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => SignupScreen()),
-                          );
-                        },
-                        child: Text("Sign Up", style: TextStyle(color: Darkgreen)),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => SignupScreen()),
+                      );
+                    },
+                    child: Text("Don't have an account? Sign up", style: TextStyle(color: lightGreen)),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: black),
+      filled: true,
+      fillColor: Colors.grey[200],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
       ),
     );
   }

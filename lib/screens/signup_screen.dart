@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/authenticate.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -7,29 +8,21 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
+  final _formKey = GlobalKey<FormState>();
 
-  // Define color scheme
-  final Color lightGreen = Color(0xFF4CAF50); // Light green accent
+  final Color lightGreen = Color(0xFF4CAF50);
   final Color black = Colors.black;
   final Color white = Colors.white;
 
   void _signUp() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-
-      // Simulate sign-up delay
-      Future.delayed(Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Account created! Please log in.")),
-        );
-        Navigator.pop(context);
-      });
+      AuthService().register(emailController.text.trim(), passwordController.text.trim());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Account created. Please log in.')),
+      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
     }
   }
 
@@ -37,6 +30,11 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: white,
+      appBar: AppBar(
+        backgroundColor: black,
+        title: Text("Create Account", style: TextStyle(color: white)),
+        leading: BackButton(color: white),
+      ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(
@@ -44,132 +42,49 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Title & Subtitle
-                  Column(
-                    children: [
-                      Text(
-                        "Create Account",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: black,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Sign up to get started",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: black.withOpacity(0.7),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 40),
+                  Text("Create Account", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: black)),
+                  SizedBox(height: 8),
+                  Text("Sign up to get started", style: TextStyle(fontSize: 16, color: black.withOpacity(0.6))),
+                  SizedBox(height: 32),
 
-                  // Email Field
                   TextFormField(
                     controller: emailController,
+                    decoration: _inputDecoration("Email", Icons.email),
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      labelStyle: TextStyle(color: black),
-                      prefixIcon: Icon(Icons.email, color: black),
-                      filled: true,
-                      fillColor: white,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: black),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your email";
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return "Enter a valid email";
-                      }
-                      return null;
-                    },
+                    validator: (value) =>
+                        value!.isEmpty || !value.contains('@') ? "Enter a valid email" : null,
                   ),
                   SizedBox(height: 16),
 
-                  // Password Field
                   TextFormField(
                     controller: passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: "Password",
-                      labelStyle: TextStyle(color: black),
-                      prefixIcon: Icon(Icons.lock, color: black),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: black,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      filled: true,
-                      fillColor: white,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: black),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your password";
-                      }
-                      if (value.length < 6) {
-                        return "Password must be at least 6 characters";
-                      }
-                      return null;
-                    },
+                    decoration: _inputDecoration("Password", Icons.lock),
+                    obscureText: true,
+                    validator: (value) =>
+                        value!.length < 6 ? "Password must be at least 6 characters" : null,
                   ),
-                  SizedBox(height: 24),
+                  SizedBox(height: 32),
 
-                  // Sign Up Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _signUp,
+                      onPressed: _signUp,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: lightGreen,
                         padding: EdgeInsets.symmetric(vertical: 14),
-                        textStyle: TextStyle(fontSize: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: _isLoading
-                          ? CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(white),
-                            )
-                          : Text("Sign Up", style: TextStyle(color: white)),
+                      child: Text("Sign Up", style: TextStyle(color: white, fontSize: 18)),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 12),
 
-                  // Back to Login Navigation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Already have an account? ", style: TextStyle(color: black)),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text("Login", style: TextStyle(color: lightGreen)),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+                    },
+                    child: Text("Already have an account? Log In", style: TextStyle(color: lightGreen)),
                   ),
                 ],
               ),
@@ -177,6 +92,16 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: black),
+      filled: true,
+      fillColor: Colors.grey[200],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
     );
   }
 }
